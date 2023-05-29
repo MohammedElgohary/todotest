@@ -41,13 +41,13 @@ export default function Todo() {
 
   function deleteTodo(id: number) {
     Swal.fire({
-      title: "Are you sure?",
+      title: "Do you want to delete?",
       text: "You won't be able to revert this!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
       cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!",
+      confirmButtonText: "Yes",
     }).then((result) => {
       if (result.isConfirmed) {
         setState((prev) => ({
@@ -96,7 +96,24 @@ export default function Todo() {
         <CardBody>
           <Flex alignItems="center" justifyContent="center" className="my-3">
             <Button
-              className="btn btn-success"
+              className={`btn  ${
+                state.displayTarget === "archived" ? "btn-success" : "btn-light"
+              }`}
+              onClick={() =>
+                setState((prev) => ({ ...prev, displayTarget: "archived" }))
+              }
+              gap={"8px"}
+            >
+              <Flex>
+                <FaCloudDownloadAlt size={20} />
+                ArChived Todos
+              </Flex>
+            </Button>
+
+            <Button
+              className={`btn  ${
+                state.displayTarget === "active" ? "btn-success" : "btn-light"
+              }`}
               onClick={() =>
                 setState((prev) => ({ ...prev, displayTarget: "active" }))
               }
@@ -107,19 +124,6 @@ export default function Todo() {
                 Active Todos
               </Flex>
             </Button>
-
-            <Button
-              className="btn btn-danger"
-              oonClick={() =>
-                setState((prev) => ({ ...prev, displayTarget: "archived" }))
-              }
-              gap={"8px"}
-            >
-              <Flex>
-                <FaCloudDownloadAlt size={20} />
-                ArChived Todos
-              </Flex>
-            </Button>
           </Flex>
 
           <>
@@ -127,7 +131,11 @@ export default function Todo() {
               <h4 className="text-danger text-center bg-light p-3">No Todos</h4>
             )}
 
-            {[...state.todos].map((todo) => (
+            {[
+              ...(state.displayTarget === "active"
+                ? state.todos.filter((todo) => todo.archivedAt === null)
+                : state.todos.filter((todo) => todo.archivedAt)),
+            ].map((todo) => (
               <div
                 key={"item" + todo.id}
                 className={`px-5 py-3 mb-3 bg-light ${

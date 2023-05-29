@@ -45,7 +45,7 @@ export default function TodoForm({
               id: new Date().getTime(),
               createdAt: new Date(),
               updatedAt: null,
-              ArchivedAt: null,
+              archivedAt: null,
               finishedAt: null,
               checked: false,
             },

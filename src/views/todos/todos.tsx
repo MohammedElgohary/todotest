@@ -1,6 +1,15 @@
 import { useState, useEffect } from "react";
 import TodoForm from "./components/todoForm/TodoForm";
-import { Button, Card, CardBody, CardHeader } from "reactstrap";
+import {
+  Button,
+  Card,
+  CardBody,
+  CardFooter,
+  CardHeader,
+  FormGroup,
+  Input,
+  Label,
+} from "reactstrap";
 import { Flex } from "../../components/grid/flex";
 import { FaCloudDownloadAlt } from "react-icons/fa";
 import { IoMdCloudUpload } from "react-icons/io";
@@ -16,6 +25,7 @@ export interface TodoState {
   todos: any[];
   currentTodo: any;
   displayTarget: "archived" | "active";
+  search: string;
 }
 
 export default function TodoList() {
@@ -28,18 +38,30 @@ export default function TodoList() {
     todos: useLocalStorage("todos", []),
     currentTodo: null,
     displayTarget: "active",
+    search: "",
   });
 
   const displayedItems =
     state.displayTarget === "active"
-      ? state.todos.filter((todo) => todo.archivedAt === null)
-      : state.todos.filter((todo) => todo.archivedAt);
+      ? state.todos.filter(
+          (todo) =>
+            todo.archivedAt === null &&
+            (todo.title.includes(state.search) ||
+              todo.description.includes(state.search))
+        )
+      : state.todos.filter(
+          (todo) =>
+            todo.archivedAt &&
+            (todo.title.includes(state.search) ||
+              todo.description.includes(state.search))
+        );
 
   /***
    * Toggle
    */
-  const toggle = () =>
+  function toggle() {
     setState((prev) => ({ ...prev, isOpen: !prev.isOpen, target: "create" }));
+  }
 
   function deleteTodo(id: number) {
     Swal.fire({
@@ -60,6 +82,55 @@ export default function TodoList() {
     });
   }
 
+  function checkAllTodos() {
+    if (displayedItems.length)
+      Swal.fire({
+        title: "Do you want to check all?",
+        text: "You won't be able to undo this!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          setState((prev) => ({
+            ...prev,
+            todos:
+              prev.displayTarget === "active"
+                ? prev.todos.map((todo) =>
+                    todo.archivedAt ? todo : { ...todo, checked: true }
+                  )
+                : prev.todos.map((todo) =>
+                    !todo.archivedAt ? todo : { ...todo, checked: true }
+                  ),
+          }));
+        }
+      });
+  }
+  function deleteAllTodos() {
+    if (displayedItems.length)
+      Swal.fire({
+        title: "Do you want to delete all?",
+        text: "You won't be able to revert this!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          setState((prev) => ({
+            ...prev,
+            todos:
+              prev.displayTarget === "active"
+                ? prev.todos.filter((todo) => todo.archivedAt)
+                : prev.todos.filter((todo) => !todo.archivedAt),
+          }));
+        }
+      });
+  }
+
   function checkTodo(id: number) {
     setState((prev) => ({
       ...prev,
@@ -73,7 +144,9 @@ export default function TodoList() {
     setState((prev) => ({
       ...prev,
       todos: prev.todos.map((todo) =>
-        todo.id === id ? { ...todo, archivedAt: new Date() } : todo
+        todo.id === id
+          ? { ...todo, archivedAt: todo.archivedAt ? null : new Date() }
+          : todo
       ),
     }));
   }
@@ -89,14 +162,17 @@ export default function TodoList() {
           <Flex alignItems="center" justifyContent="space-between">
             <h1>Todos</h1>
 
-            <Button className="btn bg-primary" onClick={toggle}>
-              <AiOutlinePlus size={20} />
-              Add Todo
-            </Button>
+            {state.displayTarget === "active" && (
+              <Button className="btn bg-primary" onClick={toggle}>
+                <AiOutlinePlus size={20} />
+                Add Todo
+              </Button>
+            )}
           </Flex>
         </CardHeader>
 
         <CardBody>
+          {/* Display Target Todos */}
           <Flex alignItems="center" justifyContent="center" className="my-3">
             <Button
               className={`btn  ${
@@ -129,41 +205,77 @@ export default function TodoList() {
             </Button>
           </Flex>
 
-          <>
-            {displayedItems.length === 0 && (
-              <h4>
-                <Flex
-                  className="text-danger bg-light p-5 px-3"
-                  justifyContent="center"
-                  alignItems="center"
-                >
-                  <HiOutlineClipboardDocumentList size={40} />
-                  No Todos
-                </Flex>
-              </h4>
-            )}
+          {/* Search Panel */}
+          <FormGroup className="mx-1">
+            <Label>Search</Label>
+            <Input
+              type="text"
+              onChange={(e) =>
+                setState((prev) => ({ ...prev, search: e.target.value }))
+              }
+            />
+          </FormGroup>
 
-            {displayedItems.map((todo) => (
-              <Todo
-                key={"item" + todo.id}
-                archiveTodo={archiveTodo}
-                todo={todo}
-                checkTodo={checkTodo}
-                deleteTodo={deleteTodo}
-                setState={setState}
-              />
-            ))}
-          </>
+          {/* Empty Data */}
+          {displayedItems.length === 0 && (
+            <h4>
+              <Flex
+                className="text-danger bg-light p-5 px-3"
+                justifyContent="center"
+                alignItems="center"
+              >
+                <HiOutlineClipboardDocumentList size={40} />
+                No Todos
+              </Flex>
+            </h4>
+          )}
+
+          {/* Todo List */}
+          {displayedItems.map((todo) => (
+            <Todo
+              state={state}
+              key={"item" + todo.id}
+              archiveTodo={archiveTodo}
+              todo={todo}
+              checkTodo={checkTodo}
+              deleteTodo={deleteTodo}
+              setState={setState}
+            />
+          ))}
         </CardBody>
+
+        <CardFooter
+          className="d-flex justify-content-end"
+          style={{ gap: "10px" }}
+        >
+          <Button
+            disabled={displayedItems.length === 0}
+            className="btn bg-success btn-sm"
+            onClick={checkAllTodos}
+          >
+            Check All
+          </Button>
+
+          <Button
+            disabled={displayedItems.length === 0}
+            className="btn bg-danger btn-sm"
+            onClick={deleteAllTodos}
+          >
+            Delete All
+          </Button>
+        </CardFooter>
       </Card>
 
-      <TodoForm
-        row={state.currentTodo}
-        isOpen={state.isOpen}
-        target={state.target}
-        setState={setState}
-        toggle={toggle}
-      />
+      {/* Todo Form */}
+      {state.isOpen && (
+        <TodoForm
+          row={state.currentTodo}
+          isOpen={state.isOpen}
+          target={state.target}
+          setState={setState}
+          toggle={toggle}
+        />
+      )}
     </>
   );
 }

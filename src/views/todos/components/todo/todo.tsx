@@ -6,10 +6,11 @@ import {
   MdOutlineCheckBox,
   MdOutlineCheckBoxOutlineBlank,
 } from "react-icons/md";
-import { BsDownload } from "react-icons/bs";
+import { BsDownload, BsUpload } from "react-icons/bs";
 import { TodoState } from "../../todos";
 
 export interface TodoProps {
+  state: TodoState;
   todo: any;
   deleteTodo: (id: number) => void;
   checkTodo: (id: number) => void;
@@ -18,6 +19,7 @@ export interface TodoProps {
 }
 
 export default function Todo({
+  state,
   todo,
   deleteTodo,
   checkTodo,
@@ -47,8 +49,20 @@ export default function Todo({
             </Button>
 
             <Flex justifyContent="center" flexDirection="column" gap={"0px"}>
-              <h3 className="text-success">{todo.title}</h3>
-              <p className="text-muted">{todo.description}</p>
+              <h3
+                className={`text-success ${
+                  todo.checked && "text-decoration-line-through"
+                }`}
+              >
+                {todo.title}
+              </h3>
+              <p
+                className={`text-muted ${
+                  todo.checked && "text-decoration-line-through"
+                }`}
+              >
+                {todo.description}
+              </p>
             </Flex>
           </Flex>
 
@@ -62,21 +76,23 @@ export default function Todo({
               Delete
             </Button>
 
-            <Button
-              className="btn btn-warning btn-sm"
-              title="edit"
-              onClick={() =>
-                setState((prev: any) => ({
-                  ...prev,
-                  currentTodo: todo,
-                  isOpen: true,
-                  target: "edit",
-                }))
-              }
-            >
-              <AiOutlineEdit size={20} color="white" />
-              Edit
-            </Button>
+            {state.displayTarget === "active" && (
+              <Button
+                className="btn btn-warning btn-sm"
+                title="edit"
+                onClick={() =>
+                  setState((prev: any) => ({
+                    ...prev,
+                    currentTodo: todo,
+                    isOpen: true,
+                    target: "edit",
+                  }))
+                }
+              >
+                <AiOutlineEdit size={20} color="white" />
+                Edit
+              </Button>
+            )}
 
             <Button
               className="btn btn-info btn-sm"
@@ -99,8 +115,17 @@ export default function Todo({
               className="btn btn-gray btn-sm"
               title="archive"
             >
-              <BsDownload size={20} color="white" />
-              Archive
+              {state.displayTarget === "archived" ? (
+                <>
+                  <BsUpload size={20} color="white" />
+                  Restore
+                </>
+              ) : (
+                <>
+                  <BsDownload size={20} color="white" />
+                  Archive
+                </>
+              )}
             </Button>
           </Flex>
         </Flex>

@@ -21,7 +21,7 @@ export interface TodoFormProps {
 export default function TodoForm({
   isOpen,
   toggle,
-  setState: setTodos,
+  setState,
   target,
   row,
 }: TodoFormProps) {
@@ -35,7 +35,7 @@ export default function TodoForm({
   function handleSave(data: any) {
     switch (target) {
       case "create":
-        setTodos((prev) => ({
+        setState((prev) => ({
           ...prev,
           todos: [
             ...prev.todos,
@@ -53,11 +53,14 @@ export default function TodoForm({
         break;
 
       case "edit":
-        setTodos((prev) => ({
+        setState((prev) => ({
           ...prev,
           todos: prev.todos.map((todo) =>
-            todo.id === row.id ? { ...data, updatedAt: new Date() } : todo
+            todo.id === row.id
+              ? { ...todo, ...data, updatedAt: new Date() }
+              : todo
           ),
+          currentTodo: null,
         }));
         break;
     }

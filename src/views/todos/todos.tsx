@@ -1,17 +1,14 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import TodoForm from "./components/todoForm/TodoForm";
 import { Button, Card, CardBody, CardHeader } from "reactstrap";
 import { Flex } from "../../components/grid/flex";
-import { AiOutlineEye, AiOutlineEdit, AiOutlineDelete } from "react-icons/ai";
-import { BsDownload } from "react-icons/bs";
 import { FaCloudDownloadAlt } from "react-icons/fa";
 import { IoMdCloudUpload } from "react-icons/io";
-import {
-  MdOutlineCheckBox,
-  MdOutlineCheckBoxOutlineBlank,
-} from "react-icons/md";
+import { HiOutlineClipboardDocumentList } from "react-icons/hi2";
 import Swal from "sweetalert2";
 import useLocalStorage from "../../hooks/useLocalStorage";
+import Todo from "./components/todo/todo";
+import { AiOutlinePlus } from "react-icons/ai";
 
 export interface TodoState {
   isOpen: boolean;
@@ -21,7 +18,7 @@ export interface TodoState {
   displayTarget: "archived" | "active";
 }
 
-export default function Todo() {
+export default function TodoList() {
   /***
    * State
    */
@@ -32,6 +29,11 @@ export default function Todo() {
     currentTodo: null,
     displayTarget: "active",
   });
+
+  const displayedItems =
+    state.displayTarget === "active"
+      ? state.todos.filter((todo) => todo.archivedAt === null)
+      : state.todos.filter((todo) => todo.archivedAt);
 
   /***
    * Toggle
@@ -88,6 +90,7 @@ export default function Todo() {
             <h1>Todos</h1>
 
             <Button className="btn bg-primary" onClick={toggle}>
+              <AiOutlinePlus size={20} />
               Add Todo
             </Button>
           </Flex>
@@ -127,95 +130,28 @@ export default function Todo() {
           </Flex>
 
           <>
-            {state.todos.length === 0 && (
-              <h4 className="text-danger text-center bg-light p-3">No Todos</h4>
+            {displayedItems.length === 0 && (
+              <h4>
+                <Flex
+                  className="text-danger bg-light p-5 px-3"
+                  justifyContent="center"
+                  alignItems="center"
+                >
+                  <HiOutlineClipboardDocumentList size={40} />
+                  No Todos
+                </Flex>
+              </h4>
             )}
 
-            {[
-              ...(state.displayTarget === "active"
-                ? state.todos.filter((todo) => todo.archivedAt === null)
-                : state.todos.filter((todo) => todo.archivedAt)),
-            ].map((todo) => (
-              <div
+            {displayedItems.map((todo) => (
+              <Todo
                 key={"item" + todo.id}
-                className={`px-5 py-3 mb-3 bg-light ${
-                  todo.checked && "border border-outline-success"
-                }`}
-              >
-                <Flex alignItems="center" justifyContent="space-between">
-                  <Flex
-                    justifyContent="center"
-                    flexDirection="column"
-                    gap={"0px"}
-                  >
-                    <div className="text-success">{todo.title}</div>
-                    <div className="text-muted">{todo.description}</div>
-                  </Flex>
-
-                  <Flex>
-                    <Button
-                      className="btn btn-danger btn-sm"
-                      title="delete"
-                      onClick={() => deleteTodo(todo.id)}
-                    >
-                      <AiOutlineDelete size={20} color="white" />
-                    </Button>
-
-                    <Button
-                      className="btn btn-warning btn-sm"
-                      title="edit"
-                      onClick={() =>
-                        setState((prev) => ({
-                          ...prev,
-                          currentTodo: todo,
-                          isOpen: true,
-                          target: "edit",
-                        }))
-                      }
-                    >
-                      <AiOutlineEdit size={20} color="white" />
-                    </Button>
-
-                    <Button
-                      className="btn btn-info btn-sm"
-                      onClick={() => checkTodo(todo.id)}
-                      title="check"
-                    >
-                      {todo.checked ? (
-                        <MdOutlineCheckBox size={20} color="white" />
-                      ) : (
-                        <MdOutlineCheckBoxOutlineBlank
-                          size={20}
-                          color="white"
-                        />
-                      )}
-                    </Button>
-
-                    <Button
-                      className="btn btn-success btn-sm"
-                      title="view"
-                      onClick={() =>
-                        setState((prev) => ({
-                          ...prev,
-                          currentTodo: todo,
-                          isOpen: true,
-                          target: "view",
-                        }))
-                      }
-                    >
-                      <AiOutlineEye size={20} color="white" />
-                    </Button>
-
-                    <Button
-                      onClick={() => archiveTodo(todo.id)}
-                      className="btn btn-gray btn-sm"
-                      title="archive"
-                    >
-                      <BsDownload size={20} color="white" />
-                    </Button>
-                  </Flex>
-                </Flex>
-              </div>
+                archiveTodo={archiveTodo}
+                todo={todo}
+                checkTodo={checkTodo}
+                deleteTodo={deleteTodo}
+                setState={setState}
+              />
             ))}
           </>
         </CardBody>

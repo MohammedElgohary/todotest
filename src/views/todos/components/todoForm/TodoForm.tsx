@@ -25,7 +25,6 @@ export default function TodoForm({
   target,
   row,
 }: TodoFormProps) {
-  console.log(row?.title);
   const { control, handleSubmit, reset } = useForm({
     defaultValues: {
       title: row?.title,
